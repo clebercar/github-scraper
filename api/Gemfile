@@ -1,0 +1,39 @@
+source "https://rubygems.org"
+gem "rails", "~> 7.2.3"
+gem "pg", "~> 1.1"
+gem "puma", ">= 5.0"
+gem "tzinfo-data", platforms: %i[ windows jruby ]
+gem "bootsnap", require: false
+gem 'sqids'
+gem "httparty"
+gem "rack-cors"
+
+# Fix for Ruby 3.3.0 compatibility with CGI gem
+gem "cgi", ">= 0.3.6"
+
+# Background job processing
+gem "sidekiq"
+gem "redis", "~> 5.0"
+gem "connection_pool", "~> 2.4"
+
+group :development, :test do
+  gem 'pry'
+  gem 'pry-byebug'
+  gem 'annotate'
+
+  # Static analysis for security vulnerabilities [https://brakemanscanner.org/]
+  gem "brakeman", require: false
+
+  # Omakase Ruby styling [https://github.com/rails/rubocop-rails-omakase/]
+  gem "rubocop-rails-omakase", require: false
+end
+
+group :test do
+  gem "rspec-rails", "~> 6.1"
+  gem "shoulda-matchers", "~> 6.0"
+  gem "database_cleaner-active_record", "~> 2.2"
+  gem "factory_bot_rails", "~> 6.4"
+  gem "faker", "~> 3.4"
+end
+
+

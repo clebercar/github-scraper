@@ -1,0 +1,10 @@
+#!/usr/bin/env ruby
+# This script runs RSpec with the correct environment variables for Docker
+# Usage: docker-compose exec api bin/rspec [rspec options]
+
+ENV['RAILS_ENV'] = 'test'
+ENV['DATABASE_URL'] = 'postgresql://postgres:postgres@db:5432/app_test'
+
+require 'bundler/setup'
+load Gem.bin_path('rspec-core', 'rspec')
+

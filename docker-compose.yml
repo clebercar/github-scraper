@@ -1,24 +1,47 @@
 services:
-  web:
-    build: .
+  api:
+    build:
+      context: ./api
+      dockerfile: Dockerfile
+    container_name: github_scrapper_api
     command: rails server -b 0.0.0.0
     volumes:
-      - .:/app
+      - ./api:/app
       - bundle_cache:/usr/local/bundle
     ports:
       - "3000:3000"
     environment:
       - RAILS_ENV=development
+      - API_HOST=http://localhost:3000
       - DATABASE_URL=postgresql://postgres:postgres@db:5432/github_scrapper
-      - REDIS_URL=redis://redis:6379/0
+      - REDIS_SIDEKIQ_URL=redis://redis:6379
     stdin_open: true
     tty: true
     depends_on:
       - db
       - redis
 
+  web:
+    build:
+      context: ./web
+      dockerfile: Dockerfile
+    container_name: github_scrapper_web
+    volumes:
+      - ./web:/app
+      - /app/node_modules
+    ports:
+      - "4000:4000"
+    environment:
+      - NODE_ENV=development
+      - VITE_API_URL=http://localhost:3000
+    stdin_open: true
+    tty: true
+    depends_on:
+      - api
+
   db:
     image: postgres:16-alpine
+    container_name: github_scrapper_db
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:
@@ -28,27 +51,35 @@ services:
       - POSTGRES_PASSWORD=postgres
       - POSTGRES_DB=github_scrapper_development
 
+  sidekiq:
+    build:
+      context: ./api
+      dockerfile: Dockerfile
+    container_name: github_scrapper_sidekiq
+    command: bundle exec sidekiq
+    volumes:
+      - ./api:/app
+      - bundle_cache:/usr/local/bundle
+    environment:
+      - RAILS_ENV=development
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/github_scrapper
+      - REDIS_SIDEKIQ_URL=redis://redis:6379
+      - TERM=xterm-256color
+    stdin_open: true
+    tty: true
+    depends_on:
+      - db
+      - redis
+      - api
+
   redis:
     image: redis:7-alpine
+    container_name: github_scrapper_redis
     volumes:
       - redis_data:/data
     ports:
       - "6379:6379"
     command: redis-server --appendonly yes
-
-  sidekiq:
-    build: .
-    command: bundle exec sidekiq
-    volumes:
-      - .:/app
-      - bundle_cache:/usr/local/bundle
-    environment:
-      - RAILS_ENV=development
-      - DATABASE_URL=postgresql://postgres:postgres@db:5432/github_scrapper
-      - REDIS_URL=redis://redis:6379/0
-    depends_on:
-      - db
-      - redis
 
 volumes:
   postgres_data:
